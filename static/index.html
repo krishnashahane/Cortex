@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cortex — Autonomous ML Research</title>
+<style>
+  :root{--bg:#0b0e14;--panel:#141925;--panel2:#1b2230;--line:#263042;
+    --txt:#e6edf3;--mut:#8b98a9;--acc:#5eead4;--acc2:#7c93ff;--warn:#fbbf24;--good:#34d399;--bad:#f87171}
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg);color:var(--txt)}
+  header{padding:18px 26px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px}
+  header h1{font-size:18px;margin:0;letter-spacing:.5px}
+  header h1 b{color:var(--acc)}
+  .pill{font-size:11px;padding:3px 9px;border:1px solid var(--line);border-radius:999px;color:var(--mut)}
+  .pill.on{color:var(--good);border-color:var(--good)}
+  main{display:grid;grid-template-columns:300px 1fr;gap:0;height:calc(100vh - 61px)}
+  aside{border-right:1px solid var(--line);padding:18px;overflow:auto}
+  section{padding:22px 26px;overflow:auto}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+  label{display:block;font-size:11px;color:var(--mut);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.6px}
+  input,button{width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font:inherit}
+  button{cursor:pointer;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#06121f;font-weight:700;border:0;margin-top:14px}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  button.ghost{background:var(--panel2);color:var(--txt);border:1px solid var(--line);font-weight:500}
+  .run{padding:10px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;cursor:pointer;font-size:12px}
+  .run:hover{border-color:var(--acc2)}
+  .run.sel{border-color:var(--acc);background:var(--panel2)}
+  .run .id{color:var(--acc)}
+  .run .meta{color:var(--mut);font-size:11px;margin-top:3px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .stat{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px}
+  .stat .k{font-size:11px;color:var(--mut);text-transform:uppercase}
+  .stat .v{font-size:22px;font-weight:700;margin-top:4px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--mut);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.5px}
+  tr.best td{color:var(--good)}
+  .feed{font-size:12px;max-height:340px;overflow:auto}
+  .ev{display:flex;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line)}
+  .ag{flex:0 0 130px;color:var(--acc2);font-weight:600}
+  .ev .msg{color:var(--txt)}
+  .ev.kind-decision .ag{color:var(--warn)}
+  .ev.kind-evaluate .ag{color:var(--good)}
+  .ev.kind-error .ag{color:var(--bad)}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--mut);margin:0 0 12px}
+  .flow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+  .node{font-size:10px;padding:4px 9px;border:1px solid var(--line);border-radius:6px;color:var(--mut)}
+  .node.live{border-color:var(--acc);color:var(--acc)}
+  pre{white-space:pre-wrap;background:var(--panel2);padding:16px;border-radius:10px;border:1px solid var(--line);font-size:12px;max-height:420px;overflow:auto}
+  .muted{color:var(--mut)}
+  a{color:var(--acc2)}
+</style>
+</head>
+<body>
+<header>
+  <h1><b>◈ CORTEX</b> Autonomous ML Research System</h1>
+  <span class="pill" id="provider">llm: …</span>
+  <span class="pill" id="ds">dataset: …</span>
+  <span class="pill" id="thr">stop &lt; 0.1%</span>
+</header>
+<main>
+  <aside>
+    <div class="card">
+      <label>Research goal (optional)</label>
+      <input id="goal" placeholder="auto: maximize accuracy" />
+      <label>Max iterations</label>
+      <input id="maxit" type="number" value="8" min="1" max="30" />
+      <button id="start">▶ Launch research loop</button>
+    </div>
+    <h2>Runs</h2>
+    <div id="runs"></div>
+  </aside>
+  <section id="detail">
+    <p class="muted">Select or launch a run to watch the agents work.</p>
+  </section>
+</main>
+<script src="/static/app.js"></script>
+</body>
+</html>
