@@ -1,3 +1,1 @@
-"""Cortex: an autonomous ML research system."""
-
-__version__ = "1.0.0"
+"""Real ML execution layer for Cortex."""
