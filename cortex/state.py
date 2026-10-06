@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import operator
 from dataclasses import asdict, dataclass
-from typing import Annotated, Any, Optional, TypedDict
+from typing import Annotated, Any, TypedDict
 
 
 @dataclass
@@ -51,7 +51,7 @@ class ResearchState(TypedDict, total=False):
     experiments: list[dict[str, Any]]
     critiques: Annotated[list[dict[str, Any]], operator.add]
     best_score: float
-    best_experiment_id: Optional[str]
+    best_experiment_id: str | None
     last_improvement: float
     stagnation_rounds: int
     should_continue: bool
