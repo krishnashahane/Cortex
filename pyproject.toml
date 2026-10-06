@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=84,<85"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cortex-ml-research"
+version = "1.1.0"
+description = "Autonomous, reproducible ML research loop"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

@@ -1,153 +1,107 @@
 # Cortex
 
-> Autonomous Multi-Agent ML Research Scientist
+Autonomous, reproducible ML research loop with a local dashboard.
 
-Cortex is an autonomous AI research system that mimics a team of machine learning researchers. It continuously reads papers, generates hypotheses, runs experiments, evaluates results, critiques itself, and iterates until convergence.
+Cortex executes real scikit-learn experiments through a LangGraph workflow:
 
-## Features
+research -> hypothesize -> plan -> train -> evaluate -> critique -> repeat -> report
 
-* Multi-agent architecture
-* Autonomous research loops
-* Paper understanding and knowledge retrieval
-* Hypothesis generation
-* Experiment planning and execution
-* Training and evaluation pipelines
-* Self-critique and optimization
-* Long-term memory with vector databases
-* Experiment tracking and report generation
-* Modular and production-ready design
+It works fully offline by default. Anthropic and Google Gemini are optional reasoning providers.
 
-## Agents
+## Install
 
-### CEO Agent
+    git clone https://github.com/krishnashahane/Cortex.git
+    cd Cortex
+    python3 -m venv .venv
+    source .venv/bin/activate
+    python -m pip install --upgrade pip
+    python -m pip install -r requirements.txt
 
-Defines objectives and milestones.
+## Run
 
-### Paper Reader Agent
+    python run.py research
 
-Reads papers, repositories and documentation.
+    python run.py research --goal "Find a strong tabular classifier" --iters 4
 
-### Hypothesis Agent
+    python run.py serve
 
-Generates new model ideas and improvements.
+Open http://127.0.0.1:8000.
 
-### Experiment Agent
+The dashboard is intentionally loopback-only because its API can start compute-heavy research jobs and has no remote authentication.
 
-Creates training configurations and schedules.
+## Optional LLMs
 
-### Trainer Agent
+    export CORTEX_LLM_PROVIDER=auto
+    export ANTHROPIC_API_KEY="..."
 
-Runs experiments and model training.
+or:
 
-### Evaluator Agent
+    export CORTEX_LLM_PROVIDER=gemini
+    export GEMINI_API_KEY="..."
 
-Measures metrics and compares results.
+Supported providers: auto, anthropic, gemini, offline.
 
-### Critic Agent
+Failed provider calls automatically fall back to deterministic offline behavior.
 
-Analyzes weaknesses and proposes improvements.
+Default models:
+- Anthropic: claude-opus-4-8
+- Gemini: gemini-3.8-flash
 
-### Report Writer Agent
+Override them with CORTEX_ANTHROPIC_MODEL and CORTEX_GEMINI_MODEL.
 
-Produces reports and documentation.
+## Configuration
 
-## Workflow
-
-```text
-Research
-↓
-Read Papers
-↓
-Generate Hypotheses
-↓
-Design Experiments
-↓
-Train Models
-↓
-Evaluate Results
-↓
-Critique
-↓
-Improve
-↓
-Repeat
-```
+| Variable | Default | Purpose |
+|---|---|---|
+| CORTEX_MAX_ITERATIONS | 8 | Research budget, capped at 30 |
+| CORTEX_IMPROVEMENT_THRESHOLD | 0.001 | Relative improvement threshold |
+| CORTEX_PATIENCE | 2 | Low-improvement rounds before stopping |
+| CORTEX_DATASET | breast_cancer | breast_cancer, wine, digits, iris |
+| CORTEX_PRIMARY_METRIC | accuracy | accuracy, f1, precision, recall, roc_auc |
+| CORTEX_RANDOM_STATE | 42 | Reproducible seed |
+| CORTEX_LLM_PROVIDER | auto | auto, anthropic, gemini, offline |
+| CORTEX_DATA_DIR | ./data | Local SQLite/semantic-memory database root |
+| CORTEX_REPORTS_DIR | ./reports | Markdown report directory |
 
 ## Architecture
 
-```text
-CEO
- ↓
-Paper Reader
- ↓
-Hypothesis Generator
- ↓
-Experiment Planner
- ↓
-Trainer
- ↓
-Evaluator
- ↓
-Critic
- ↓
-Report Writer
- ↓
-Memory
- ↓
-Loop
-```
+    CEO
+      |
+      +-- continue --> Research -> Hypothesis -> Plan -> Train
+      |                                      |          |
+      |                                      +---- Evaluate
+      |                                               |
+      |                                            Critic
+      |                                               |
+      +-- terminate ------------------------------> Report
 
-## Tech Stack
+The CEO owns deterministic termination. The Trainer executes a real ML pipeline; results are not simulated.
 
-* Python
-* LangGraph
-* FastAPI
-* ChromaDB
-* PostgreSQL
-* Redis
-* Docker
-* PyTorch
-* HuggingFace Transformers
-* Ollama / Claude API / OpenAI API
+## Security and data hygiene
 
-## Example Goals
+Runtime data is intentionally ignored by Git:
 
-* Improve object detection models
-* Optimize LLM architectures
-* Discover better training strategies
-* Evaluate model variants automatically
-* Generate reproducible reports
+    data/cortex.db
+    reports/run_*.md
 
-## Directory Structure
+The semantic memory is local and stored in the same SQLite database; Cortex does not expose a network vector database.
 
-```text
-cortex/
+API keys are read only from environment variables. They are not persisted to SQLite, memory metadata, or reports.
 
-agents/
-memory/
-papers/
-experiments/
-models/
-reports/
-tests/
-src/
-configs/
-docs/
-```
+The dashboard validates request size and iteration limits, only permits loopback binds, and caps concurrent research jobs.
 
-## Vision
+Training configurations coming from the LLM are allow-listed and numerically bounded to prevent malformed or resource-exhausting hyperparameters.
 
-Cortex aims to become an autonomous ML scientist capable of conducting iterative research and accelerating scientific discovery through agentic engineering.
+## Development
 
-## Future
+    python -m pip install -r requirements.txt -r requirements-dev.txt
+    python -m compileall -q cortex run.py tests
+    ruff check .
+    pytest -q
+    pip-audit
 
-* Distributed agents
-* Reinforcement learning optimization
-* Multi-modal research
-* Automatic paper publishing
-* Self-improving architectures
-* Large-scale experiment orchestration
+CI runs the same checks plus a one-iteration offline smoke research run.
 
----
+## License
 
-Built with agentic engineering, not vibe coding.
+MIT

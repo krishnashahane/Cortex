@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "fix/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt -r requirements-dev.txt
+      - name: Compile
+        run: python -m compileall -q cortex run.py tests
+      - name: Lint
+        run: ruff check .
+      - name: Tests
+        env:
+          CORTEX_DATA_DIR: /tmp/cortex-test-data
+          CORTEX_REPORTS_DIR: /tmp/cortex-test-reports
+          CORTEX_LLM_PROVIDER: offline
+          CORTEX_MAX_ITERATIONS: "2"
+        run: pytest -q
+      - name: Offline smoke run
+        env:
+          CORTEX_DATA_DIR: /tmp/cortex-smoke-data
+          CORTEX_REPORTS_DIR: /tmp/cortex-smoke-reports
+          CORTEX_LLM_PROVIDER: offline
+          CORTEX_MAX_ITERATIONS: "1"
+        run: python run.py research --iters 1
+      - name: Dependency vulnerability scan
+        run: pip-audit

@@ -1,13 +1,5 @@
-"""Evaluator agent — the "Evaluate" step.
-
-Scores the trained experiment against the primary metric, computes the
-relative improvement vs the best score so far, persists the experiment to
-SQLite and ChromaDB, and updates the run's best result. The improvement it
-computes is exactly what the CEO uses for the <0.1% termination rule.
-"""
+"""Evaluator agent — scores and persists experiments."""
 from __future__ import annotations
-
-from typing import Any
 
 from ..config import settings
 from ..memory import get_memory
@@ -17,16 +9,19 @@ from .base import event, now_iso
 AGENT = "Evaluator"
 
 
-def evaluator_node(state: dict[str, Any]) -> dict[str, Any]:
+def evaluator_node(state: dict) -> dict:
     raw = state.get("raw_result", {})
     metric = settings.primary_metric
     metrics = raw.get("metrics", {})
-    score = float(metrics.get(metric, 0.0)) if raw.get("status") == "completed" else 0.0
+    score = (
+        float(metrics.get(metric, 0.0))
+        if raw.get("status") == "completed"
+        else 0.0
+    )
 
     prev_best = state.get("best_score", -1.0)
     iteration = state.get("iteration", 1)
 
-    # Relative improvement vs incumbent (guard against zero/negative baseline).
     if prev_best <= 0:
         improvement = 1.0 if score > 0 else 0.0
     else:
@@ -45,18 +40,22 @@ def evaluator_node(state: dict[str, Any]) -> dict[str, Any]:
         "notes": raw.get("notes", ""),
     }
 
-    # Persist to relational store + semantic memory.
     save_experiment(state.get("run_id", "unknown"), exp, now_iso())
     get_memory().add_experiment(
         exp["id"],
-        f"{raw.get('model','')} config={exp['config']} -> {metric}={score:.4f}",
-        {"iteration": iteration, "score": score, "model": raw.get("model", ""), "status": exp["status"]},
+        f"{raw.get('model', '')} config={exp['config']} -> {metric}={score:.4f}",
+        {
+            "iteration": iteration,
+            "score": score,
+            "model": raw.get("model", ""),
+            "status": exp["status"],
+        },
     )
 
     experiments = list(state.get("experiments", []))
     experiments.append(exp)
 
-    patch: dict[str, Any] = {
+    patch: dict = {
         "experiments": experiments,
         "last_result": {**exp, "model": raw.get("model", "")},
         "last_improvement": improvement,
@@ -67,10 +66,19 @@ def evaluator_node(state: dict[str, Any]) -> dict[str, Any]:
         patch["best_experiment_id"] = exp["id"]
 
     ev = event(
-        state, AGENT, "evaluate",
-        f"Score {metric}={score:.4f} (best={max(score, prev_best):.4f}, "
-        f"improvement={improvement*100:.4f}%)",
-        {"score": score, "improvement": improvement, "is_best": is_best},
+        state,
+        AGENT,
+        "evaluate",
+        (
+            f"Score {metric}={score:.4f} "
+            f"(best={max(score, prev_best):.4f}, "
+            f"improvement={improvement * 100:.4f}%)"
+        ),
+        {
+            "score": score,
+            "improvement": improvement,
+            "is_best": is_best,
+        },
     )
     patch["events"] = [ev]
     return patch
