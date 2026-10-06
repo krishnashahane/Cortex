@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import logging
 import re
-from typing import Any, Optional
+from typing import Any
 
 from .config import settings
 
@@ -79,7 +79,7 @@ class LLMClient:
         return parsed if parsed is not None else fallback
 
 
-def _extract_json(text: str) -> Optional[dict[str, Any]]:
+def _extract_json(text: str) -> dict[str, Any] | None:
     if not text:
         return None
     cleaned = text.strip()
@@ -100,7 +100,7 @@ def _extract_json(text: str) -> Optional[dict[str, Any]]:
     return value if isinstance(value, dict) else None
 
 
-_singleton: Optional[LLMClient] = None
+_singleton: LLMClient | None = None
 
 
 def get_llm() -> LLMClient:
