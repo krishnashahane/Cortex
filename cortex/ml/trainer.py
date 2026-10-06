@@ -22,7 +22,7 @@ from ..config import settings
 from .datasets import load_split
 
 _ALLOWED = {
-    "random_forest": {"n_estimators", "max_depth", "min_samples_split", "max_features", "criterion"},
+    "random_forest": {\n        "n_estimators",\n        "max_depth",\n        "min_samples_split",\n        "max_features",\n        "criterion",\n    },
     "gradient_boosting": {"n_estimators", "learning_rate", "max_depth", "subsample"},
     "logistic_regression": {"C", "penalty", "solver"},
     "svm": {"C", "kernel", "gamma"},
