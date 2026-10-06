@@ -1,34 +1,21 @@
-"""CEO agent — orchestration & termination authority.
-
-The CEO sits at the top of every loop. It:
-  * sets the research goal on the first pass,
-  * decides whether to continue or terminate based on the improvement
-    threshold (<0.1% relative gain) and the iteration budget,
-  * records the rationale for the decision.
-
-Termination logic is deterministic so the "<0.1% improvement" rule is exact
-and auditable; the LLM only adds a narrative rationale.
-"""
+"""CEO agent — orchestration and termination authority."""
 from __future__ import annotations
 
-from typing import Any
-
 from ..config import settings
-from ..llm import get_llm
 from .base import event
 
 AGENT = "CEO"
 
 
-def ceo_node(state: dict[str, Any]) -> dict[str, Any]:
+def ceo_node(state: dict) -> dict:
     iteration = state.get("iteration", 0)
-    patch: dict[str, Any] = {}
+    patch: dict = {}
     events = []
 
     if iteration == 0:
         goal = state.get("goal") or (
             f"Maximize {settings.primary_metric} on the {settings.dataset} "
-            f"classification task through iterative experimentation."
+            "classification task through iterative experimentation."
         )
         patch["goal"] = goal
         patch["best_score"] = state.get("best_score", -1.0)
@@ -39,7 +26,6 @@ def ceo_node(state: dict[str, Any]) -> dict[str, Any]:
         patch["events"] = events
         return patch
 
-    # Evaluate termination after a completed iteration.
     last_improvement = state.get("last_improvement", 1.0)
     stagnation = state.get("stagnation_rounds", 0)
     max_iter = state.get("max_iterations", settings.max_iterations)
@@ -53,8 +39,8 @@ def ceo_node(state: dict[str, Any]) -> dict[str, Any]:
         if stagnation + 1 >= settings.patience:
             cont = False
             reason = (
-                f"Improvement {last_improvement*100:.4f}% < "
-                f"{settings.improvement_threshold*100:.3f}% for {settings.patience} round(s)."
+                f"Improvement {last_improvement * 100:.4f}% < "
+                f"{settings.improvement_threshold * 100:.3f}% for {settings.patience} round(s)."
             )
         else:
             patch["stagnation_rounds"] = stagnation + 1
@@ -64,7 +50,9 @@ def ceo_node(state: dict[str, Any]) -> dict[str, Any]:
 
     decision = "CONTINUE" if cont else "TERMINATE"
     msg = f"Iteration {iteration} decision: {decision}. {reason}".strip()
-    events.append(event(state, AGENT, "decision", msg, {"improvement": last_improvement}))
+    events.append(
+        event(state, AGENT, "decision", msg, {"improvement": last_improvement})
+    )
 
     patch["should_continue"] = cont
     patch["termination_reason"] = reason if not cont else ""
@@ -74,6 +62,5 @@ def ceo_node(state: dict[str, Any]) -> dict[str, Any]:
     return patch
 
 
-def route_after_ceo(state: dict[str, Any]) -> str:
-    """Conditional edge: continue the loop or finalize."""
+def route_after_ceo(state: dict) -> str:
     return "research" if state.get("should_continue", False) else "report"
