@@ -28,7 +28,9 @@ class HashingEmbedding(EmbeddingFunction):
     def _one(self, text: str) -> list[float]:
         values = [0.0] * self.dimension
         tokens = _TOKEN.findall((text or "").lower())
-        grams = tokens + [f"{left}_{right}" for left, right in zip(tokens, tokens[1:], strict=False)]
+        grams = tokens + [
+            f"{left}_{right}" for left, right in zip(tokens, tokens[1:], strict=False)
+        ]
         for gram in grams:
             digest = hashlib.sha256(gram.encode("utf-8")).digest()
             bucket = int.from_bytes(digest[:8], "big") % self.dimension
