@@ -1,6 +1,4 @@
-"""Dataset loading. Uses scikit-learn's bundled datasets so Cortex runs
-fully offline with real data — no downloads required.
-"""
+"""Dataset loading from scikit-learn's bundled datasets."""
 from __future__ import annotations
 
 from functools import lru_cache
@@ -21,19 +19,28 @@ _LOADERS = {
 
 @lru_cache(maxsize=8)
 def load_split(name: str) -> tuple[Any, Any, Any, Any, dict[str, Any]]:
-    loader = _LOADERS.get(name, skd.load_breast_cancer)
+    normalized = name.strip().lower()
+    loader = _LOADERS.get(normalized)
+    if loader is None:
+        allowed = ", ".join(sorted(_LOADERS))
+        raise ValueError(f"unsupported dataset {name!r}; choose one of: {allowed}")
+
     bunch = loader()
     X, y = bunch.data, bunch.target
-    X_tr, X_te, y_tr, y_te = train_test_split(
-        X, y, test_size=0.25, random_state=settings.random_state, stratify=y
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.25,
+        random_state=settings.random_state,
+        stratify=y,
     )
     meta = {
-        "name": name,
+        "name": normalized,
         "n_features": int(X.shape[1]),
         "n_samples": int(X.shape[0]),
         "n_classes": int(len(set(y))),
     }
-    return X_tr, X_te, y_tr, y_te, meta
+    return X_train, X_test, y_train, y_test, meta
 
 
 def dataset_meta(name: str) -> dict[str, Any]:
