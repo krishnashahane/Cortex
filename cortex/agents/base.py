@@ -16,12 +16,24 @@ def short_id(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:8]}"
 
 
-def event(state: dict[str, Any], agent: str, kind: str, message: str, data: Any = None) -> dict[str, Any]:
-    """Build an event dict and persist it. Returned for state['events'] merge."""
+def event(
+    state: dict[str, Any],
+    agent: str,
+    kind: str,
+    message: str,
+    data: Any = None,
+) -> dict[str, Any]:
+    """Build an event dict and persist it."""
     ts = now_iso()
     run_id = state.get("run_id", "unknown")
     try:
         log_event(run_id, ts, agent, kind, message, data)
     except Exception:
         pass
-    return {"ts": ts, "agent": agent, "kind": kind, "message": message, "data": data}
+    return {
+        "ts": ts,
+        "agent": agent,
+        "kind": kind,
+        "message": message,
+        "data": data,
+    }
