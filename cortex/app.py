@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import threading
 from pathlib import Path
-from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, PlainTextResponse
@@ -28,7 +27,7 @@ _active_lock = threading.Lock()
 
 class StartRequest(BaseModel):
     goal: str = Field(default="", max_length=1000)
-    max_iterations: Optional[int] = Field(default=None, ge=1, le=30)
+    max_iterations: int | None = Field(default=None, ge=1, le=30)
 
 
 def _finish(run_id: str) -> None:
@@ -36,9 +35,13 @@ def _finish(run_id: str) -> None:
         _active.pop(run_id, None)
 
 
-def _worker(run_id: str, goal: str, max_iterations: Optional[int]) -> None:
+def _worker(run_id: str, goal: str, max_iterations: int | None) -> None:
     try:
-        run_research(goal=goal, max_iterations=max_iterations, run_id=run_id)
+        run_research(
+            goal=goal,
+            max_iterations=max_iterations,
+            run_id=run_id,
+        )
     except Exception:
         pass
     finally:
