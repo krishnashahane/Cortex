@@ -5,7 +5,7 @@ import json
 import os
 import sqlite3
 import threading
-from typing import Any, Optional
+from typing import Any
 
 from .config import settings
 
@@ -135,7 +135,7 @@ def log_event(
         )
 
 
-def get_run(run_id: str) -> Optional[dict[str, Any]]:
+def get_run(run_id: str) -> dict[str, Any] | None:
     with _lock, _conn() as connection:
         row = connection.execute(
             "SELECT * FROM runs WHERE run_id=?", (run_id,)
