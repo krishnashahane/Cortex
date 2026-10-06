@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import threading
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -12,7 +13,7 @@ from pydantic import BaseModel, Field
 from .config import settings
 from .engine import new_run_id, run_research
 from .llm import get_llm
-from .persistence import get_run, init_db, list_events, list_experiments, list_runs
+from .persistence import get_run, init_db, list_events, list_experiments, list_runs, upsert_run
 
 ROOT = Path(__file__).resolve().parent.parent
 STATIC = ROOT / "static"
@@ -58,7 +59,24 @@ def start_run(request: StartRequest) -> dict[str, str]:
     with _active_lock:
         if len(_active) >= MAX_ACTIVE_RUNS:
             raise HTTPException(status_code=429, detail="too many active research runs")
+
         run_id = new_run_id()
+        started_at = datetime.now(timezone.utc).isoformat()
+        upsert_run(
+            {
+                "run_id": run_id,
+                "goal": request.goal.strip() or "(auto)",
+                "status": "running",
+                "started_at": started_at,
+                "finished_at": None,
+                "iterations": 0,
+                "best_score": 0.0,
+                "best_experiment_id": None,
+                "termination_reason": "",
+                "report_path": None,
+            }
+        )
+
         thread = threading.Thread(
             target=_worker,
             args=(run_id, request.goal.strip(), request.max_iterations),
@@ -66,6 +84,7 @@ def start_run(request: StartRequest) -> dict[str, str]:
             name=f"cortex-{run_id}",
         )
         _active[run_id] = thread
+
     thread.start()
     return {"run_id": run_id, "status": "running"}
 
