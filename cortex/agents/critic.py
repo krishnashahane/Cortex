@@ -49,7 +49,7 @@ def critic_node(state: dict) -> dict:
                 f"Latest result: {state.get('last_result', {}).get('metrics', {})}\n"
                 f"Improvement: {state.get('last_improvement', 0) * 100:.4f}%\n"
                 f"History size: {len(state.get('experiments', []))}\n"
-                "Give a critique. JSON: {"summary":str,"suggestion":str}"
+                "Give a critique. JSON: {\"summary\":str,\"suggestion\":str}"
             ),
             fallback={},
         )
