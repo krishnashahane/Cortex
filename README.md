@@ -6,7 +6,7 @@ Cortex executes real scikit-learn experiments through a LangGraph workflow:
 
 research -> hypothesize -> plan -> train -> evaluate -> critique -> repeat -> report
 
-It works offline by default. Anthropic and Google Gemini are optional reasoning providers.
+It works fully offline by default. Anthropic and Google Gemini are optional reasoning providers.
 
 ## Install
 
@@ -20,12 +20,14 @@ It works offline by default. Anthropic and Google Gemini are optional reasoning 
 ## Run
 
     python run.py research
+
     python run.py research --goal "Find a strong tabular classifier" --iters 4
+
     python run.py serve
 
-Dashboard: http://127.0.0.1:8000
+Open http://127.0.0.1:8000.
 
-The dashboard is loopback-only because its API starts compute-heavy research jobs and has no remote authentication.
+The dashboard is intentionally loopback-only because its API can start compute-heavy research jobs and has no remote authentication.
 
 ## Optional LLMs
 
@@ -37,15 +39,15 @@ or:
     export CORTEX_LLM_PROVIDER=gemini
     export GEMINI_API_KEY="..."
 
-Provider values: auto, anthropic, gemini, offline.
+Supported providers: auto, anthropic, gemini, offline.
 
-Failed provider calls fall back to the deterministic offline path.
+Failed provider calls automatically fall back to deterministic offline behavior.
 
-Defaults:
-- Anthropic model: claude-opus-4-8
-- Gemini model: gemini-3.8-flash
+Default models:
+- Anthropic: claude-opus-4-8
+- Gemini: gemini-3.8-flash
 
-Override with CORTEX_ANTHROPIC_MODEL and CORTEX_GEMINI_MODEL.
+Override them with CORTEX_ANTHROPIC_MODEL and CORTEX_GEMINI_MODEL.
 
 ## Configuration
 
@@ -58,7 +60,7 @@ Override with CORTEX_ANTHROPIC_MODEL and CORTEX_GEMINI_MODEL.
 | CORTEX_PRIMARY_METRIC | accuracy | accuracy, f1, precision, recall, roc_auc |
 | CORTEX_RANDOM_STATE | 42 | Reproducible seed |
 | CORTEX_LLM_PROVIDER | auto | auto, anthropic, gemini, offline |
-| CORTEX_DATA_DIR | ./data | SQLite and Chroma data |
+| CORTEX_DATA_DIR | ./data | Local SQLite/semantic-memory database root |
 | CORTEX_REPORTS_DIR | ./reports | Markdown report directory |
 
 ## Architecture
@@ -73,19 +75,22 @@ Override with CORTEX_ANTHROPIC_MODEL and CORTEX_GEMINI_MODEL.
       |                                               |
       +-- terminate ------------------------------> Report
 
-The CEO owns deterministic termination. The Trainer executes a real ML pipeline; results are never simulated.
+The CEO owns deterministic termination. The Trainer executes a real ML pipeline; results are not simulated.
 
 ## Security and data hygiene
 
 Runtime data is intentionally ignored by Git:
 
     data/cortex.db
-    data/chroma/
     reports/run_*.md
 
-API keys are read only from environment variables. They are not persisted to SQLite, Chroma metadata, or reports.
+The semantic memory is local and stored in the same SQLite database; Cortex does not expose a network vector database.
 
-The API validates request size and iteration limits, the dashboard only binds to loopback, and concurrent research jobs are bounded.
+API keys are read only from environment variables. They are not persisted to SQLite, memory metadata, or reports.
+
+The dashboard validates request size and iteration limits, only permits loopback binds, and caps concurrent research jobs.
+
+Training configurations coming from the LLM are allow-listed and numerically bounded to prevent malformed or resource-exhausting hyperparameters.
 
 ## Development
 
