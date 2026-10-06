@@ -57,4 +57,4 @@ class ResearchState(TypedDict, total=False):
     should_continue: bool
     termination_reason: str
     events: Annotated[list[dict[str, Any]], operator.add]
-    report_path: Optional[str]
+    report_path: str | None
